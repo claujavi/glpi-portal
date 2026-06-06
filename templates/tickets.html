@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Mis pedidos — Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Mis pedidos</h1>
+</div>
+
+{% if not tickets %}
+  <p class="empty">No hay pedidos registrados.</p>
+{% else %}
+<ul class="ticket-list">
+  {% for ticket in tickets %}
+  <li class="ticket-card ticket-status-{{ ticket.status }}">
+    <a href="/tickets/{{ ticket.id }}" class="ticket-card-link">
+      <div class="ticket-card-header">
+        <span class="ticket-id">#{{ ticket.id }}</span>
+        <span class="ticket-badge ticket-badge-{{ ticket.status }}">{{ ticket.estado }}</span>
+      </div>
+      <div class="ticket-name">{{ ticket.name }}</div>
+      <div class="ticket-meta">
+        {% if ticket.fecha %}{{ ticket.fecha }}{% endif %}
+        · Prioridad: {{ ticket.prioridad }}
+      </div>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

@@ -98,12 +98,17 @@ glpi-portal/
 ├── 02_explorar_tickets.py  ← lista tickets y muestra seguimientos
 ├── 03_test_escritura.py    ← prueba agregar seguimiento a un ticket
 │
-└── (próximos pasos)
-    ├── glpi_client.py      ← cliente GLPI reutilizable
-    ├── auth.py             ← autenticación LDAP → JWT
-    ├── main.py             ← app FastAPI
-    ├── templates/          ← Jinja2
-    └── static/             ← CSS, JS mínimo
+├── glpi_client.py          ← cliente async GLPI (context manager, Pydantic)
+├── main.py                 ← app FastAPI con rutas
+├── templates/
+│   ├── base.html           ← layout base con HTMX
+│   ├── tickets.html        ← lista de tickets
+│   ├── ticket.html         ← detalle + conversación
+│   ├── error.html          ← página de error genérica
+│   └── partials/
+│       └── seguimientos.html  ← fragmento HTMX para la conversación
+└── static/
+    └── style.css           ← estilos (sin framework externo)
 ```
 
 ---
@@ -113,13 +118,16 @@ glpi-portal/
 - [x] Arquitectura diseñada
 - [x] Scripts de validación creados (01, 02, 03)
 - [x] Repositorio GitHub creado y sincronizado
-- [x] uv configurado con dependencias (httpx, urllib3)
-- [ ] **Próximo paso**: correr `01_test_conexion.py` y validar que la API responde
-- [ ] Explorar estructura real de tickets con `02_explorar_tickets.py`
-- [ ] Probar escritura con `03_test_escritura.py`
-- [ ] Construir `glpi_client.py` como capa de abstracción
-- [ ] Autenticación LDAP con AD on-premise
-- [ ] App FastAPI base con Jinja2 + HTMX
+- [x] uv configurado con dependencias (fastapi, httpx, urllib3, jinja2, uvicorn)
+- [x] `glpi_client.py` — cliente async con Pydantic (Ticket, Seguimiento, Adjunto)
+- [x] `main.py` — app FastAPI con rutas (lista + detalle + agregar seguimiento)
+- [x] Templates Jinja2 + HTMX (lista, detalle, conversación en tiempo real)
+- [x] CSS propio sin framework externo
+- [ ] **Bloqueado**: App-Token de GLPI incorrecto — esperando credenciales del admin
+- [ ] Validar scripts 01, 02, 03 cuando el token esté corregido
+- [ ] Autenticación LDAP con AD on-premise (auth.py)
+- [ ] Filtrar tickets por usuario autenticado
+- [ ] Deploy en Docker/Proxmox
 
 ---
 

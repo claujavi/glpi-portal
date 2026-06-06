@@ -1,0 +1,14 @@
+{% if seguimientos %}
+  {% for s in seguimientos %}
+  <div class="mensaje {% if s.es_privado %}mensaje-privado{% endif %}">
+    <div class="mensaje-meta">
+      <span class="mensaje-usuario">Usuario {{ s.users_id }}</span>
+      <span class="mensaje-fecha">{{ s.fecha }}</span>
+      {% if s.es_privado %}<span class="badge-privado">Privado</span>{% endif %}
+    </div>
+    <div class="mensaje-texto">{{ s.texto }}</div>
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="empty">Aún no hay comentarios en este pedido.</p>
+{% endif %}

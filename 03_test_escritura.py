@@ -16,7 +16,7 @@ Cómo correr:
 
 import httpx
 import json
-from config import GLPI_URL, APP_TOKEN, GLPI_USER, GLPI_PASS
+from config import GLPI_URL, APP_TOKEN, USER_TOKEN
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -34,8 +34,7 @@ class GLPIClient:
     def iniciar_sesion(self):
         resp = self.client.get(
             f"{self.base}/apirest.php/initSession",
-            headers=self.headers,
-            auth=(GLPI_USER, GLPI_PASS),
+            headers={**self.headers, "Authorization": f"user_token {USER_TOKEN}"},
         )
         resp.raise_for_status()
         self.headers["Session-Token"] = resp.json()["session_token"]

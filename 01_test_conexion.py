@@ -14,21 +14,21 @@ Cómo correr:
 
 import httpx
 import sys
-from config import GLPI_URL, APP_TOKEN, GLPI_USER, GLPI_PASS
+from config import GLPI_URL, APP_TOKEN, USER_TOKEN
 
 
 def probar_url(base_url: str) -> str | None:
-    """Intenta conectarse a GLPI y devuelve la URL que funciona, o None."""
+    """Intenta conectarse a GLPI con user_token + App-Token y devuelve el session_token, o None."""
     url = f"{base_url}/apirest.php/initSession"
     headers = {
+        "Authorization": f"user_token {USER_TOKEN}",
         "App-Token": APP_TOKEN,
         "Content-Type": "application/json",
     }
-    auth = (GLPI_USER, GLPI_PASS)
 
     print(f"\n→ Probando: {url}")
     try:
-        resp = httpx.get(url, headers=headers, auth=auth, timeout=10, verify=False)
+        resp = httpx.get(url, headers=headers, timeout=10, verify=False)
         print(f"  Status: {resp.status_code}")
 
         if resp.status_code == 200:

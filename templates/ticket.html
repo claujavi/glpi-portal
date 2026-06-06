@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}#{{ ticket.id }} — {{ ticket.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="/tickets" class="back-link">← Volver</a>
+  <h1>{{ ticket.name }}</h1>
+  <span class="ticket-badge ticket-badge-{{ ticket.status }}">{{ ticket.estado }}</span>
+</div>
+
+{% if ticket.descripcion %}
+<div class="ticket-description">
+  <h3>Descripción</h3>
+  <p>{{ ticket.descripcion }}</p>
+</div>
+{% endif %}
+
+<div class="conversation">
+  <h3>Conversación</h3>
+
+  <div id="seguimientos-lista">
+    {% include "partials/seguimientos.html" %}
+  </div>
+
+  <form class="reply-form"
+        hx-post="/tickets/{{ ticket.id }}/seguimiento"
+        hx-target="#seguimientos-lista"
+        hx-swap="innerHTML"
+        hx-on::after-request="this.reset()">
+    <textarea name="contenido"
+              placeholder="Escribí tu comentario o consulta..."
+              required
+              rows="3"></textarea>
+    <button type="submit">Enviar</button>
+  </form>
+</div>
+
+{% if adjuntos %}
+<div class="adjuntos">
+  <h3>Adjuntos ({{ adjuntos | length }})</h3>
+  <ul>
+    {% for adj in adjuntos %}
+    <li>📎 {{ adj.nombre_archivo }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}
