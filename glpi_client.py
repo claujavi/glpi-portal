@@ -85,6 +85,7 @@ class Seguimiento(BaseModel):
     users_id: int | str | None = None
     content: str = ""
     is_private: int = 0
+    nombre_display: Optional[str] = None  # resuelto post-fetch
 
     @property
     def texto(self) -> str:
@@ -98,6 +99,10 @@ class Seguimiento(BaseModel):
     def fecha(self) -> str:
         return self.date[:16].replace("T", " ") if self.date else ""
 
+    @property
+    def autor(self) -> str:
+        return self.nombre_display or str(self.users_id or "Desconocido")
+
 
 class Adjunto(BaseModel):
     id: int                          # Document_Item ID
@@ -105,10 +110,15 @@ class Adjunto(BaseModel):
     name: Optional[str] = None
     filename: Optional[str] = None
     mime: Optional[str] = None
+    date_creation: Optional[str] = None  # viene del Document_Item
 
     @property
     def nombre_archivo(self) -> str:
         return self.filename or self.name or f"adjunto_{self.id}"
+
+    @property
+    def fecha(self) -> str:
+        return self.date_creation[:16].replace("T", " ") if self.date_creation else ""
 
 
 class GLPIClient:
@@ -190,11 +200,33 @@ class GLPIClient:
         data = await self._get(f"Ticket/{ticket_id}", {"expand_dropdowns": True})
         return Ticket.model_validate(data)
 
+    async def _nombre_usuario(self, user_id: int) -> str:
+        try:
+            data = await self._get(f"User/{user_id}")
+            firstname = (data.get("firstname") or "").strip()
+            realname = (data.get("realname") or "").strip()
+            nombre = f"{firstname} {realname}".strip()
+            return nombre or data.get("name") or str(user_id)
+        except httpx.HTTPStatusError:
+            return str(user_id)
+
     async def obtener_seguimientos(self, ticket_id: int) -> list[Seguimiento]:
         try:
             data = await self._get(f"Ticket/{ticket_id}/ITILFollowup")
-            if isinstance(data, list):
-                return [Seguimiento.model_validate(s) for s in data]
+            if not isinstance(data, list):
+                return []
+            seguimientos = [Seguimiento.model_validate(s) for s in data]
+
+            # Resolver nombres reales de usuarios únicos
+            ids_unicos = {s.users_id for s in seguimientos if isinstance(s.users_id, int)}
+            nombres = {}
+            for uid in ids_unicos:
+                nombres[uid] = await self._nombre_usuario(uid)
+            for s in seguimientos:
+                if isinstance(s.users_id, int) and s.users_id in nombres:
+                    s.nombre_display = nombres[s.users_id]
+
+            return seguimientos
         except httpx.HTTPStatusError:
             pass
         return []
@@ -285,9 +317,14 @@ class GLPIClient:
                         name=doc.get("name"),
                         filename=doc.get("filename"),
                         mime=doc.get("mime"),
+                        date_creation=item.get("date_creation"),
                     ))
                 except httpx.HTTPStatusError:
-                    adjuntos.append(Adjunto(id=item["id"], documents_id=doc_id))
+                    adjuntos.append(Adjunto(
+                        id=item["id"],
+                        documents_id=doc_id,
+                        date_creation=item.get("date_creation"),
+                    ))
             return adjuntos
         except httpx.HTTPStatusError:
             pass

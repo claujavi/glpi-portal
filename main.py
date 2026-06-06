@@ -15,6 +15,16 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
+def _build_timeline(seguimientos, adjuntos) -> list[dict]:
+    items = (
+        [{"tipo": "seguimiento", "item": s} for s in seguimientos]
+        + [{"tipo": "adjunto", "item": a} for a in adjuntos]
+    )
+    return sorted(items, key=lambda x: (
+        x["item"].date if x["tipo"] == "seguimiento" else (x["item"].date_creation or "")
+    ))
+
+
 @app.exception_handler(401)
 async def auth_exception_handler(request: Request, exc: HTTPException):
     return RedirectResponse(url="/login")
@@ -130,13 +140,13 @@ async def detalle_ticket(
     except httpx.HTTPStatusError as exc:
         raise HTTPException(status_code=exc.response.status_code, detail="Ticket no encontrado")
 
+    timeline = _build_timeline(seguimientos, adjuntos)
     return templates.TemplateResponse(
         request=request,
         name="ticket.html",
         context={
             "ticket": ticket,
-            "seguimientos": seguimientos,
-            "adjuntos": adjuntos,
+            "timeline": timeline,
             "usuario": usuario,
         },
     )
@@ -152,29 +162,15 @@ async def agregar_seguimiento(
     async with GLPIClient() as client:
         await client.agregar_seguimiento(ticket_id, contenido)
         seguimientos = await client.obtener_seguimientos(ticket_id)
-
-    return templates.TemplateResponse(
-        request=request,
-        name="partials/seguimientos.html",
-        context={"seguimientos": seguimientos},
-    )
-
-
-@app.delete("/adjunto/{item_id}", response_class=HTMLResponse)
-async def eliminar_adjunto(
-    request: Request,
-    item_id: int,
-    ticket_id: int,
-    usuario: dict = Depends(get_usuario_actual),
-):
-    async with GLPIClient() as client:
-        await client.eliminar_adjunto(item_id)
         adjuntos = await client.obtener_adjuntos(ticket_id)
+
+    timeline = _build_timeline(seguimientos, adjuntos)
     return templates.TemplateResponse(
         request=request,
-        name="partials/adjuntos.html",
-        context={"adjuntos": adjuntos, "ticket_id": ticket_id},
+        name="partials/timeline.html",
+        context={"timeline": timeline, "ticket_id": ticket_id},
     )
+
 
 
 @app.get("/adjunto/{documents_id}")

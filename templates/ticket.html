@@ -15,43 +15,35 @@
 </div>
 {% endif %}
 
-<div class="conversation">
-  <h3>Conversación</h3>
+<div class="actividad">
+  <h3>Actividad</h3>
 
-  <div id="seguimientos-lista">
-    {% include "partials/seguimientos.html" %}
-  </div>
-
-  <form class="reply-form"
-        hx-post="/tickets/{{ ticket.id }}/seguimiento"
-        hx-target="#seguimientos-lista"
-        hx-swap="innerHTML"
-        hx-on::after-request="this.reset()">
-    <textarea name="contenido"
-              placeholder="Escribí tu comentario o consulta..."
-              required
-              rows="3"></textarea>
-    <button type="submit">Enviar</button>
-  </form>
-</div>
-
-<div class="adjuntos">
-  <h3>Adjuntos</h3>
-
-  <div id="adjuntos-seccion">
+  <div id="timeline">
     {% with ticket_id=ticket.id %}
-      {% include "partials/adjuntos.html" %}
+      {% include "partials/timeline.html" %}
     {% endwith %}
   </div>
 
-  <form class="upload-form"
-        hx-post="/tickets/{{ ticket.id }}/adjunto"
-        hx-target="#adjuntos-seccion"
-        hx-swap="innerHTML"
-        hx-encoding="multipart/form-data"
-        hx-on::after-request="this.reset()">
-    <input type="file" name="archivo" required>
-    <button type="submit">Subir archivo</button>
-  </form>
+  <div class="reply-area">
+    <form class="reply-form"
+          hx-post="/tickets/{{ ticket.id }}/seguimiento"
+          hx-target="#timeline"
+          hx-swap="innerHTML"
+          hx-on::after-request="this.reset()">
+      <textarea name="contenido"
+                placeholder="Escribí tu comentario o consulta..."
+                required
+                rows="3"></textarea>
+      <button type="submit">Enviar comentario</button>
+    </form>
+
+    <form class="upload-form"
+          hx-post="/tickets/{{ ticket.id }}/adjunto"
+          hx-encoding="multipart/form-data"
+          hx-on::after-request="this.reset()">
+      <input type="file" name="archivo" required>
+      <button type="submit">Subir archivo</button>
+    </form>
+  </div>
 </div>
 {% endblock %}

@@ -287,7 +287,54 @@ body {
 }
 .reply-form button:hover { background: var(--primary-hover); }
 
-/* ── Adjuntos ───────────────────────────────────────── */
+/* ── Actividad (timeline unificada) ─────────────────── */
+.actividad { margin-bottom: 1.5rem; }
+.actividad h3 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+
+.timeline-adjunto {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.timeline-adjunto-icono { font-size: 1.1rem; flex-shrink: 0; }
+.timeline-adjunto-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.timeline-adjunto-info .adjunto-link {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Reply area ─────────────────────────────────────── */
+.reply-area {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+/* ── Adjuntos (lista separada — mantenida por compatibilidad) ── */
 .adjuntos {
   background: var(--surface);
   border: 1px solid var(--border);
