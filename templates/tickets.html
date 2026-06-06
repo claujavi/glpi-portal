@@ -6,25 +6,19 @@
   <h1>Mis pedidos</h1>
 </div>
 
-{% if not tickets %}
-  <p class="empty">No hay pedidos registrados.</p>
-{% else %}
-<ul class="ticket-list">
-  {% for ticket in tickets %}
-  <li class="ticket-card ticket-status-{{ ticket.status }}">
-    <a href="/tickets/{{ ticket.id }}" class="ticket-card-link">
-      <div class="ticket-card-header">
-        <span class="ticket-id">#{{ ticket.id }}</span>
-        <span class="ticket-badge ticket-badge-{{ ticket.status }}">{{ ticket.estado }}</span>
-      </div>
-      <div class="ticket-name">{{ ticket.name }}</div>
-      <div class="ticket-meta">
-        {% if ticket.fecha %}{{ ticket.fecha }}{% endif %}
-        · Prioridad: {{ ticket.prioridad }}
-      </div>
-    </a>
-  </li>
-  {% endfor %}
-</ul>
-{% endif %}
+<div class="search-bar">
+  <input type="search"
+         name="q"
+         placeholder="Buscar por título o #ID..."
+         value="{{ q or '' }}"
+         autocomplete="off"
+         hx-get="/tickets"
+         hx-trigger="keyup changed delay:300ms, search"
+         hx-target="#tickets-container"
+         hx-swap="innerHTML">
+</div>
+
+<div id="tickets-container">
+  {% include "partials/ticket_list.html" %}
+</div>
 {% endblock %}

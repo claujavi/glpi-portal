@@ -1,0 +1,20 @@
+{% if adjuntos %}
+<ul class="adjuntos-lista">
+  {% for adj in adjuntos %}
+  <li class="adjunto-item">
+    {% if adj.documents_id %}
+    <a href="/adjunto/{{ adj.documents_id }}" class="adjunto-link">📎 {{ adj.nombre_archivo }}</a>
+    <button class="adjunto-borrar"
+            hx-delete="/adjunto/{{ adj.id }}?ticket_id={{ ticket_id }}"
+            hx-target="#adjuntos-seccion"
+            hx-swap="innerHTML"
+            hx-confirm="¿Borrar {{ adj.nombre_archivo }}?">×</button>
+    {% else %}
+    📎 {{ adj.nombre_archivo }}
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty-small">(sin adjuntos)</p>
+{% endif %}

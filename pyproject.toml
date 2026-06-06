@@ -7,5 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.136.3",
     "httpx>=0.28.1",
+    "ldap3>=2.9.1",
+    "python-jose[cryptography]>=3.5.0",
     "urllib3>=2.7.0",
 ]

@@ -123,11 +123,16 @@ glpi-portal/
 - [x] `main.py` — app FastAPI con rutas (lista + detalle + agregar seguimiento)
 - [x] Templates Jinja2 + HTMX (lista, detalle, conversación en tiempo real)
 - [x] CSS propio sin framework externo
-- [ ] **Bloqueado**: App-Token de GLPI incorrecto — esperando credenciales del admin
-- [ ] Validar scripts 01, 02, 03 cuando el token esté corregido
-- [ ] Autenticación LDAP con AD on-premise (auth.py)
-- [ ] Filtrar tickets por usuario autenticado
+- [x] Validar conexión GLPI — funciona con `user_token` + `App-Token` (no usuario/contraseña)
+- [x] Scripts 01, 02, 03 validados contra soporte10
+- [x] Autenticación LDAP con AD (`auth.py`) — bind UPN + search en base DN completa
+- [x] JWT en cookie httponly (8 horas), logout, redirección automática al login
+- [x] Filtrado de tickets por usuario logueado
+- [x] App corriendo end-to-end: login AD → lista tickets → detalle → agregar seguimiento
+- [ ] **Próximo paso**: borrar `coneccion ldap.txt` antes del commit
 - [ ] Deploy en Docker/Proxmox
+- [ ] Apuntar a producción (`soporte.vialidad.gob.ar`) cuando esté el App-Token correcto
+- [ ] Mejorar filtrado de tickets (server-side via GLPI API en lugar de client-side)
 
 ---
 

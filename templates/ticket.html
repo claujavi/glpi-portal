@@ -35,14 +35,23 @@
   </form>
 </div>
 
-{% if adjuntos %}
 <div class="adjuntos">
-  <h3>Adjuntos ({{ adjuntos | length }})</h3>
-  <ul>
-    {% for adj in adjuntos %}
-    <li>📎 {{ adj.nombre_archivo }}</li>
-    {% endfor %}
-  </ul>
+  <h3>Adjuntos</h3>
+
+  <div id="adjuntos-seccion">
+    {% with ticket_id=ticket.id %}
+      {% include "partials/adjuntos.html" %}
+    {% endwith %}
+  </div>
+
+  <form class="upload-form"
+        hx-post="/tickets/{{ ticket.id }}/adjunto"
+        hx-target="#adjuntos-seccion"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data"
+        hx-on::after-request="this.reset()">
+    <input type="file" name="archivo" required>
+    <button type="submit">Subir archivo</button>
+  </form>
 </div>
-{% endif %}
 {% endblock %}

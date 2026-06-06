@@ -10,6 +10,12 @@
 <body>
   <header class="header">
     <a href="/tickets" class="header-logo">Portal de Pedidos</a>
+    {% if usuario %}
+    <div class="header-user">
+      <span>{{ usuario.nombre }}</span>
+      <a href="/logout" class="header-logout">Salir</a>
+    </div>
+    {% endif %}
   </header>
   <main class="main">
     {% block content %}{% endblock %}

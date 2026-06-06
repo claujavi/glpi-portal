@@ -100,7 +100,8 @@ class Seguimiento(BaseModel):
 
 
 class Adjunto(BaseModel):
-    id: int
+    id: int                          # Document_Item ID
+    documents_id: Optional[int] = None  # Document ID (para descargar)
     name: Optional[str] = None
     filename: Optional[str] = None
     mime: Optional[str] = None
@@ -219,11 +220,98 @@ class GLPIClient:
         )
         return resp.status_code in (200, 201)
 
+    async def subir_adjunto(
+        self,
+        ticket_id: int,
+        filename: str,
+        content: bytes,
+        content_type: str,
+    ) -> bool:
+        import json as _json
+
+        # GLPI 9 requiere que el nombre del campo en el form coincida
+        # exactamente con el valor de _filename en el manifest
+        field_name = "file"
+        manifest = _json.dumps({"input": {"name": filename, "_filename": [field_name]}})
+        headers_sin_content_type = {
+            k: v for k, v in self._headers.items() if k != "Content-Type"
+        }
+        resp = await self._http.post(
+            f"{self._base}/apirest.php/Document",
+            headers=headers_sin_content_type,
+            files={
+                "uploadManifest": (None, manifest, "application/json"),
+                field_name: (filename, content, content_type or "application/octet-stream"),
+            },
+        )
+        if resp.status_code not in (200, 201):
+            return False
+
+        resp_data = resp.json()
+        doc_id = resp_data.get("id") if isinstance(resp_data, dict) else None
+        if not doc_id:
+            return False
+
+        payload = {
+            "input": {
+                "documents_id": doc_id,
+                "itemtype": "Ticket",
+                "items_id": ticket_id,
+                "timeline_position": 1,  # TIMELINE_LEFT — necesario para mostrar en la timeline de GLPI
+            }
+        }
+        resp2 = await self._http.post(
+            f"{self._base}/apirest.php/Document_Item",
+            headers=self._headers,
+            json=payload,
+        )
+        return resp2.status_code in (200, 201)
+
     async def obtener_adjuntos(self, ticket_id: int) -> list[Adjunto]:
         try:
-            data = await self._get(f"Ticket/{ticket_id}/Document_Item")
-            if isinstance(data, list):
-                return [Adjunto.model_validate(a) for a in data]
+            items = await self._get(f"Ticket/{ticket_id}/Document_Item")
+            if not isinstance(items, list):
+                return []
+            adjuntos = []
+            for item in items:
+                doc_id = item.get("documents_id")
+                if not doc_id:
+                    continue
+                try:
+                    doc = await self._get(f"Document/{doc_id}")
+                    adjuntos.append(Adjunto(
+                        id=item["id"],
+                        documents_id=doc_id,
+                        name=doc.get("name"),
+                        filename=doc.get("filename"),
+                        mime=doc.get("mime"),
+                    ))
+                except httpx.HTTPStatusError:
+                    adjuntos.append(Adjunto(id=item["id"], documents_id=doc_id))
+            return adjuntos
         except httpx.HTTPStatusError:
             pass
         return []
+
+    async def eliminar_adjunto(self, item_id: int) -> bool:
+        resp = await self._http.delete(
+            f"{self._base}/apirest.php/Document_Item/{item_id}",
+            headers=self._headers,
+        )
+        return resp.status_code in (200, 204)
+
+    async def descargar_adjunto(self, documents_id: int) -> tuple[bytes, str, str]:
+        resp = await self._http.get(
+            f"{self._base}/apirest.php/Document/{documents_id}",
+            headers=self._headers,
+            params={"alt": "media"},
+        )
+        resp.raise_for_status()
+        cd = resp.headers.get("Content-Disposition", "")
+        filename = "adjunto"
+        if 'filename="' in cd:
+            filename = cd.split('filename="')[1].rstrip('"')
+        elif "filename=" in cd:
+            filename = cd.split("filename=")[1].split(";")[0].strip()
+        mime = resp.headers.get("Content-Type", "application/octet-stream")
+        return resp.content, filename, mime
