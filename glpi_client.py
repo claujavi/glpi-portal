@@ -299,36 +299,55 @@ class GLPIClient:
         )
         return resp2.status_code in (200, 201)
 
-    async def obtener_adjuntos(self, ticket_id: int) -> list[Adjunto]:
+    async def obtener_adjuntos(
+        self,
+        ticket_id: int,
+        followup_ids: list[int] | None = None,
+    ) -> list[Adjunto]:
+        raw_items: list[dict] = []
+
+        # Documentos vinculados directamente al ticket
         try:
             items = await self._get(f"Ticket/{ticket_id}/Document_Item")
-            if not isinstance(items, list):
-                return []
-            adjuntos = []
-            for item in items:
-                doc_id = item.get("documents_id")
-                if not doc_id:
-                    continue
-                try:
-                    doc = await self._get(f"Document/{doc_id}")
-                    adjuntos.append(Adjunto(
-                        id=item["id"],
-                        documents_id=doc_id,
-                        name=doc.get("name"),
-                        filename=doc.get("filename"),
-                        mime=doc.get("mime"),
-                        date_creation=item.get("date_creation"),
-                    ))
-                except httpx.HTTPStatusError:
-                    adjuntos.append(Adjunto(
-                        id=item["id"],
-                        documents_id=doc_id,
-                        date_creation=item.get("date_creation"),
-                    ))
-            return adjuntos
+            if isinstance(items, list):
+                raw_items.extend(items)
         except httpx.HTTPStatusError:
             pass
-        return []
+
+        # Documentos vinculados a cada followup
+        for fid in (followup_ids or []):
+            try:
+                items = await self._get(f"ITILFollowup/{fid}/Document_Item")
+                if isinstance(items, list):
+                    raw_items.extend(items)
+            except httpx.HTTPStatusError:
+                pass
+
+        # Deduplicar por documents_id (un mismo archivo puede aparecer en varios niveles)
+        seen: set[int] = set()
+        adjuntos: list[Adjunto] = []
+        for item in raw_items:
+            doc_id = item.get("documents_id")
+            if not doc_id or doc_id in seen:
+                continue
+            seen.add(doc_id)
+            try:
+                doc = await self._get(f"Document/{doc_id}")
+                adjuntos.append(Adjunto(
+                    id=item["id"],
+                    documents_id=doc_id,
+                    name=doc.get("name"),
+                    filename=doc.get("filename"),
+                    mime=doc.get("mime"),
+                    date_creation=item.get("date_creation"),
+                ))
+            except httpx.HTTPStatusError:
+                adjuntos.append(Adjunto(
+                    id=item["id"],
+                    documents_id=doc_id,
+                    date_creation=item.get("date_creation"),
+                ))
+        return adjuntos
 
     async def eliminar_adjunto(self, item_id: int) -> bool:
         resp = await self._http.delete(

@@ -136,7 +136,7 @@ async def detalle_ticket(
         async with GLPIClient() as client:
             ticket = await client.obtener_ticket(ticket_id)
             seguimientos = await client.obtener_seguimientos(ticket_id)
-            adjuntos = await client.obtener_adjuntos(ticket_id)
+            adjuntos = await client.obtener_adjuntos(ticket_id, followup_ids=[s.id for s in seguimientos])
     except httpx.HTTPStatusError as exc:
         raise HTTPException(status_code=exc.response.status_code, detail="Ticket no encontrado")
 
@@ -162,7 +162,7 @@ async def agregar_seguimiento(
     async with GLPIClient() as client:
         await client.agregar_seguimiento(ticket_id, contenido)
         seguimientos = await client.obtener_seguimientos(ticket_id)
-        adjuntos = await client.obtener_adjuntos(ticket_id)
+        adjuntos = await client.obtener_adjuntos(ticket_id, followup_ids=[s.id for s in seguimientos])
 
     timeline = _build_timeline(seguimientos, adjuntos)
     return templates.TemplateResponse(
