@@ -324,6 +324,46 @@ body {
   text-overflow: ellipsis;
 }
 
+/* ── Tareas ─────────────────────────────────────────── */
+.tarea {
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #3b82f6;
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.6rem;
+}
+.tarea-hecha {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  border-left-color: #22c55e;
+}
+.tarea-privada {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  border-left-color: #f59e0b;
+}
+.tarea-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+.tarea-icono { font-size: 0.95rem; }
+.tarea-estado {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #3b82f6;
+  background: #dbeafe;
+  padding: 0.1rem 0.45rem;
+  border-radius: 99px;
+}
+.tarea-hecha .tarea-estado { color: #15803d; background: #dcfce7; }
+.tarea-texto { white-space: pre-wrap; font-size: 0.9rem; }
+
 /* ── Reply area ─────────────────────────────────────── */
 .reply-area {
   margin-top: 1rem;

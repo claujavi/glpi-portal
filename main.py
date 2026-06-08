@@ -15,13 +15,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-def _build_timeline(seguimientos, adjuntos) -> list[dict]:
+def _build_timeline(seguimientos, adjuntos, tareas=None) -> list[dict]:
     items = (
         [{"tipo": "seguimiento", "item": s} for s in seguimientos]
         + [{"tipo": "adjunto", "item": a} for a in adjuntos]
+        + [{"tipo": "tarea", "item": t} for t in (tareas or [])]
     )
     return sorted(items, key=lambda x: (
-        x["item"].date if x["tipo"] == "seguimiento" else (x["item"].date_creation or "")
+        x["item"].date_creation if x["tipo"] == "adjunto" else (x["item"].date or "")
     ))
 
 
@@ -136,11 +137,12 @@ async def detalle_ticket(
         async with GLPIClient() as client:
             ticket = await client.obtener_ticket(ticket_id)
             seguimientos = await client.obtener_seguimientos(ticket_id)
-            adjuntos = await client.obtener_adjuntos(ticket_id, followup_ids=[s.id for s in seguimientos])
+            tareas = await client.obtener_tareas(ticket_id)
+            adjuntos = await client.obtener_adjuntos(ticket_id, followup_ids=[s.id for s in seguimientos], tarea_ids=[t.id for t in tareas])
     except httpx.HTTPStatusError as exc:
         raise HTTPException(status_code=exc.response.status_code, detail="Ticket no encontrado")
 
-    timeline = _build_timeline(seguimientos, adjuntos)
+    timeline = _build_timeline(seguimientos, adjuntos, tareas)
     return templates.TemplateResponse(
         request=request,
         name="ticket.html",
@@ -162,9 +164,10 @@ async def agregar_seguimiento(
     async with GLPIClient() as client:
         await client.agregar_seguimiento(ticket_id, contenido)
         seguimientos = await client.obtener_seguimientos(ticket_id)
-        adjuntos = await client.obtener_adjuntos(ticket_id, followup_ids=[s.id for s in seguimientos])
+        tareas = await client.obtener_tareas(ticket_id)
+        adjuntos = await client.obtener_adjuntos(ticket_id, followup_ids=[s.id for s in seguimientos], tarea_ids=[t.id for t in tareas])
 
-    timeline = _build_timeline(seguimientos, adjuntos)
+    timeline = _build_timeline(seguimientos, adjuntos, tareas)
     return templates.TemplateResponse(
         request=request,
         name="partials/timeline.html",

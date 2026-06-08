@@ -10,6 +10,18 @@
       </div>
       <div class="mensaje-texto">{{ s.texto }}</div>
     </div>
+    {% elif entry.tipo == "tarea" %}
+    {% set t = entry.item %}
+    <div class="tarea {% if t.state == 2 %}tarea-hecha{% endif %} {% if t.es_privado %}tarea-privada{% endif %}">
+      <div class="tarea-header">
+        <span class="tarea-icono">{% if t.state == 2 %}✔{% else %}◎{% endif %}</span>
+        <span class="tarea-estado">{{ t.estado }}</span>
+        <span class="mensaje-usuario">{{ t.autor }}</span>
+        <span class="mensaje-fecha">{{ t.fecha }}</span>
+        {% if t.es_privado %}<span class="badge-privado">Privado</span>{% endif %}
+      </div>
+      <div class="tarea-texto">{{ t.texto }}</div>
+    </div>
     {% else %}
     {% set a = entry.item %}
     <div class="timeline-adjunto">

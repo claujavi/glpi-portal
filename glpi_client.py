@@ -10,7 +10,7 @@ from typing import Optional
 import httpx
 from pydantic import BaseModel
 
-from config import APP_TOKEN, GLPI_URL, USER_TOKEN
+from config import APP_TOKEN, GLPI_URL, GLPI_VERSION, USER_TOKEN
 
 ESTADOS = {
     1: "Nuevo",
@@ -104,6 +104,43 @@ class Seguimiento(BaseModel):
         return self.nombre_display or str(self.users_id or "Desconocido")
 
 
+ESTADOS_TAREA = {
+    0: "Información",
+    1: "Por hacer",
+    2: "Hecho",
+}
+
+
+class Tarea(BaseModel):
+    id: int
+    date: Optional[str] = None
+    users_id: int | str | None = None
+    content: str = ""
+    state: int = 0
+    is_private: int = 0
+    nombre_display: Optional[str] = None
+
+    @property
+    def texto(self) -> str:
+        return _limpiar_html(self.content)
+
+    @property
+    def es_privado(self) -> bool:
+        return bool(self.is_private)
+
+    @property
+    def fecha(self) -> str:
+        return self.date[:16].replace("T", " ") if self.date else ""
+
+    @property
+    def estado(self) -> str:
+        return ESTADOS_TAREA.get(self.state, "")
+
+    @property
+    def autor(self) -> str:
+        return self.nombre_display or str(self.users_id or "Desconocido")
+
+
 class Adjunto(BaseModel):
     id: int                          # Document_Item ID
     documents_id: Optional[int] = None  # Document ID (para descargar)
@@ -129,6 +166,9 @@ class GLPIClient:
         async with GLPIClient() as client:
             tickets = await client.listar_tickets()
     """
+
+    # Nombres de endpoints que cambiaron entre GLPI 9 y 10
+    _TASK_ENDPOINT = "ITILTask" if GLPI_VERSION >= 10 else "TicketTask"
 
     def __init__(self):
         self._base = GLPI_URL.rstrip("/")
@@ -231,6 +271,26 @@ class GLPIClient:
             pass
         return []
 
+    async def obtener_tareas(self, ticket_id: int) -> list[Tarea]:
+        try:
+            data = await self._get(f"Ticket/{ticket_id}/{self._TASK_ENDPOINT}")
+            if not isinstance(data, list):
+                return []
+            tareas = [Tarea.model_validate(t) for t in data]
+
+            ids_unicos = {t.users_id for t in tareas if isinstance(t.users_id, int)}
+            nombres = {}
+            for uid in ids_unicos:
+                nombres[uid] = await self._nombre_usuario(uid)
+            for t in tareas:
+                if isinstance(t.users_id, int) and t.users_id in nombres:
+                    t.nombre_display = nombres[t.users_id]
+
+            return tareas
+        except httpx.HTTPStatusError:
+            pass
+        return []
+
     async def agregar_seguimiento(
         self,
         ticket_id: int,
@@ -303,6 +363,7 @@ class GLPIClient:
         self,
         ticket_id: int,
         followup_ids: list[int] | None = None,
+        tarea_ids: list[int] | None = None,
     ) -> list[Adjunto]:
         raw_items: list[dict] = []
 
@@ -318,6 +379,15 @@ class GLPIClient:
         for fid in (followup_ids or []):
             try:
                 items = await self._get(f"ITILFollowup/{fid}/Document_Item")
+                if isinstance(items, list):
+                    raw_items.extend(items)
+            except httpx.HTTPStatusError:
+                pass
+
+        # Documentos vinculados a cada tarea
+        for tid in (tarea_ids or []):
+            try:
+                items = await self._get(f"{self._TASK_ENDPOINT}/{tid}/Document_Item")
                 if isinstance(items, list):
                     raw_items.extend(items)
             except httpx.HTTPStatusError:
