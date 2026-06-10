@@ -190,6 +190,45 @@ async def descargar_adjunto(
     )
 
 
+@app.post("/tickets/{ticket_id}/tarea", response_class=HTMLResponse)
+async def crear_tarea(
+    request: Request,
+    ticket_id: int,
+    contenido: str = Form(...),
+    usuario: dict = Depends(get_usuario_actual),
+):
+    async with GLPIClient() as client:
+        await client.crear_tarea(ticket_id, contenido)
+    return HTMLResponse(
+        content="",
+        headers={"HX-Redirect": f"/tickets/{ticket_id}"},
+    )
+
+
+@app.post("/tickets/{ticket_id}/tarea/{tarea_id}/aprobar", response_class=HTMLResponse)
+async def aprobar_tarea(
+    request: Request,
+    ticket_id: int,
+    tarea_id: int,
+    usuario: dict = Depends(get_usuario_actual),
+):
+    async with GLPIClient() as client:
+        await client.aprobar_tarea(tarea_id)
+        seguimientos = await client.obtener_seguimientos(ticket_id)
+        tareas = await client.obtener_tareas(ticket_id)
+        adjuntos = await client.obtener_adjuntos(
+            ticket_id,
+            followup_ids=[s.id for s in seguimientos],
+            tarea_ids=[t.id for t in tareas],
+        )
+    timeline = _build_timeline(seguimientos, adjuntos, tareas)
+    return templates.TemplateResponse(
+        request=request,
+        name="partials/timeline.html",
+        context={"timeline": timeline, "ticket_id": ticket_id},
+    )
+
+
 @app.post("/tickets/{ticket_id}/adjunto", response_class=HTMLResponse)
 async def subir_adjunto(
     request: Request,

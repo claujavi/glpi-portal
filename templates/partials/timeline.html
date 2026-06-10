@@ -21,6 +21,13 @@
         {% if t.es_privado %}<span class="badge-privado">Privado</span>{% endif %}
       </div>
       <div class="tarea-texto">{{ t.texto }}</div>
+      {% if t.state != 2 %}
+      <button class="btn-aprobar"
+              hx-post="/tickets/{{ ticket_id }}/tarea/{{ t.id }}/aprobar"
+              hx-target="#timeline"
+              hx-swap="innerHTML"
+              hx-confirm="¿Marcar esta tarea como hecha?">&#10003; Aprobar</button>
+      {% endif %}
     </div>
     {% else %}
     {% set a = entry.item %}

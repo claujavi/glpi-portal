@@ -312,6 +312,31 @@ class GLPIClient:
         )
         return resp.status_code in (200, 201)
 
+    async def crear_tarea(self, ticket_id: int, contenido: str) -> bool:
+        payload = {
+            "input": {
+                "tickets_id": ticket_id,
+                "content": contenido,
+                "state": 1,
+                "is_private": 0,
+            }
+        }
+        resp = await self._http.post(
+            f"{self._base}/apirest.php/{self._TASK_ENDPOINT}",
+            headers=self._headers,
+            json=payload,
+        )
+        return resp.status_code in (200, 201)
+
+    async def aprobar_tarea(self, tarea_id: int) -> bool:
+        payload = {"input": {"state": 2}}
+        resp = await self._http.put(
+            f"{self._base}/apirest.php/{self._TASK_ENDPOINT}/{tarea_id}",
+            headers=self._headers,
+            json=payload,
+        )
+        return resp.status_code in (200, 201)
+
     async def subir_adjunto(
         self,
         ticket_id: int,

@@ -5,7 +5,7 @@
 GLPI_URL    = "https://soporte10.vialidad.gob.ar"            # server de prueba
 APP_TOKEN   = "KqYahqZCoAW836oVDaytaeadBRCqX4KS8TXou69l"   # App-Token del cliente API (soporte10)
 USER_TOKEN  = "ebaDkqi0uEiiQRryZCTDZnsHrUXKoahD0EGXmMh4"   # Token de API del usuario (soporte10)
-GLPI_VERSION = 10   # 9 = producción (soporte.vialidad.gob.ar), 10 = desarrollo (soporte10)
+GLPI_VERSION = 9    # 9 = GLPI 9 (ambos entornos por ahora); cambiar a 10 cuando prod migre
 
 # Active Directory
 AD_SERVER        = "vialidad.gob.ar"
