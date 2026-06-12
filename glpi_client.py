@@ -416,7 +416,16 @@ class GLPIClient:
                 if isinstance(items, list):
                     raw_items.extend(items)
             except httpx.HTTPStatusError:
-                pass
+                # GLPI 9 puede no soportar el sub-recurso; buscar directamente
+                try:
+                    items = await self._get("Document_Item", {
+                        "searchText[itemtype]": self._TASK_ENDPOINT,
+                        "searchText[items_id]": str(tid),
+                    })
+                    if isinstance(items, list):
+                        raw_items.extend(items)
+                except httpx.HTTPStatusError:
+                    pass
 
         # Deduplicar por documents_id (un mismo archivo puede aparecer en varios niveles)
         seen: set[int] = set()
